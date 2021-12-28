@@ -4,6 +4,8 @@ var courseNames = [];
 var courseHoles = {};
 var holesWithIDs = {};
 var numOfHoles = 0;
+var gHoleLoc = "";
+var uLat, uLon;
 
 const Http = new XMLHttpRequest();
 const url='https://tiemposystems.com/courselist_json.php';
@@ -67,19 +69,6 @@ function courseSelected(courseID) {
     }
 }
 
-function holeSelected(holeLoc) {
-    //Not gonna get user long and lat so here are some default values
-    lat2 = 39.4786276;
-    lon2 = -106.0757863;
-    console.log("***" + holeLoc.split(" "));
-    holeLoc.split(" ");
-    lat1 = parseFloat(holeLoc[1]);
-    lon1 = parseFloat(holeLoc[0]);
-    console.log(lon1, lat1, "---", lon2, lat2);
-    console.log(`Distance to hole (ft): ${calcCrow(lat1, lon1, lat2, lon2)}`);
-
-}
-
 function calcCrow(lat1, lon1, lat2, lon2) 
 {
   var R = 20902000; // 20902000 is for feet, for miles use 6371`
@@ -92,10 +81,51 @@ function calcCrow(lat1, lon1, lat2, lon2)
     Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2); 
   var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
   var d = R * c;
-  return d;
+  return d/3;//Divided by 3 so its yards!
+}
+
+async function updateHoleDistance(holeLoc) {
+  if (holeLoc == undefined) {
+    holeLoc = gHoleLoc;
+  }
+  gHoleLoc = holeLoc;
+  await getLocation();
+  // uLat = 39.4786276;
+  // uLon = -106.0757863;
+  //console.log("***" + holeLoc.split(" "));
+  holeLoc = holeLoc.split(",");
+  //holeLoc = holeLoc
+  console.log(holeLoc);
+  console.log(typeof holeLoc);
+  lat1 = parseFloat(holeLoc[1]);
+  lon1 = parseFloat(holeLoc[0]);
+  console.log(lon1, lat1, "---", uLon, uLat);
+
+  console.log(`Distance to hole (yrds): ${calcCrow(lat1, lon1, uLat, uLon)}`);
+  document.getElementById('hole-distance').innerHTML = `${calcCrow(lat1, lon1, uLat, uLon)} yards`;
 }
 
 function toRad(Value) 
 {
     return Value * Math.PI / 180;
+}
+
+async function getLocation() {
+  if (navigator.geolocation) {
+      var lat_lng = navigator.geolocation.getCurrentPosition(showPosition);
+      console.log(lat_lng);
+  } else {
+      alert("Geolocation is not supported by this browser.");
+  }
+  return true;
+}
+
+function showPosition(position) {
+  uLat = position.coords.latitude;
+  uLon = position.coords.longitude;
+  // var user_position = {};
+  // user_position.lat = position.coords.latitude; 
+  // user_position.lng = position.coords.longitude; 
+  // return user_position;
+  return true;
 }
